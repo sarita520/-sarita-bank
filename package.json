@@ -18,5 +18,13 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs",
+      "esModuleInterop": true,
+      "target": "es6",
+      "moduleResolution": "node"
+    }
   }
 }
