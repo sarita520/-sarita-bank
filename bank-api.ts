@@ -2,71 +2,80 @@ import express from "express";
 import cors from "cors";
 import * as crypto from "crypto";
 import * as fs from "fs";
-import OpenAI from "openai"; 
+import OpenAI from "openai"; // Importa a tecnologia para falar com a Groq
 import { SRT_BLOCKCHAIN } from "./blockchain";
 
 const app = express();
 app.use(express.json());
-app.use(cors()); // Libera conexao para o site
+app.use(cors()); // Libera para o site/app acessar
 
 // ==================================================
-// ⚡ CÉREBRO DA IA (GROQ) - SRT-BANK
+// 🤖 CONFIGURAÇÃO DA SARITA IA (VIA GROQ)
 // ==================================================
 const groq = new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1",
-  apiKey: process.env.GROQ_API_KEY || "chave-faltando"
+  baseURL: "https://api.groq.com/openai/v1", // Conecta no servidor da Groq
+  apiKey: process.env.GROQ_API_KEY // Pega a chave que você vai colocar no Render
 });
 
-const DB_FILE = "./srt_bank_db.json";
+const DB_FILE = "./srt_database.json";
 let db = { users: {} as any, accounts: {} as any };
 
+// Carrega o Banco de Dados ou cria um novo
 if (fs.existsSync(DB_FILE)) {
-  try { db = JSON.parse(fs.readFileSync(DB_FILE, "utf-8")); } catch (e) { console.log("Iniciando novo DB SRT"); }
+  try { db = JSON.parse(fs.readFileSync(DB_FILE, "utf-8")); } catch (e) { console.log("Criando novo DB SRT"); }
 }
 const saveDB = () => fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
 
-// Rota Inicial
+// Rota de Boas Vindas
 app.get("/", (req, res) => {
-  res.send("✅ SRT-BANK Financial System is Online (Powered by Sarita AI).");
+  res.send("✅ SRT-BANK System Online (Powered by Sarita AI & Groq).");
 });
 
-// 🤖 ROTA DA SARITA (IA)
+// --------------------------------------------------
+// 🧠 ROTA DA INTELIGÊNCIA ARTIFICIAL (SARITA)
+// --------------------------------------------------
 app.post("/sarita-ia", async (req, res) => {
   const { message } = req.body;
+  
   try {
     const completion = await groq.chat.completions.create({
       messages: [
         { 
             role: "system", 
-            content: "Você é a Sarita, a Inteligência Artificial oficial do SRT-BANK. O SRT é um token da rede Polygon com 500 Milhões de supply. Você é educada, rápida e especialista em cripto. Responda em Português." 
+            content: "Você é a Sarita, a Inteligência Artificial oficial do SRT-BANK. O SRT é um token da rede Polygon com 500 Milhões de supply. Você é educada, rápida e especialista em cripto e finanças. Responda sempre em Português do Brasil. Se perguntarem o preço, diga que 1 SRT vale aproximadamente R$ 5,00." 
         },
         { role: "user", content: message }
       ],
-      model: "llama-3.3-70b-versatile", // Modelo Ultra Rápido
+      model: "llama-3.3-70b-versatile", // Modelo Super Rápido da Groq
+      temperature: 0.6,
     });
+
     res.json({ resposta: completion.choices[0].message.content });
+
   } catch (error) {
-    console.error("Erro Groq:", error);
-    res.json({ resposta: "A Sarita está reiniciando os sistemas. Tente novamente!" });
+    console.error("Erro na IA:", error);
+    res.json({ resposta: "A Sarita está atualizando os dados. Tente novamente em instantes!" });
   }
 });
 
-// --- OPERAÇÕES BANCÁRIAS ---
+// --------------------------------------------------
+// 🏦 ROTAS BANCÁRIAS (CONTA, SALDO, PIX)
+// --------------------------------------------------
 
 app.post("/register", (req, res) => {
   const { name, email, password } = req.body;
-  if (db.users[email]) return res.status(400).json({ error: "Email já cadastrado no SRT-BANK." });
+  if (db.users[email]) return res.status(400).json({ error: "Email já cliente do SRT-BANK." });
 
   const address = "SRT-" + crypto.randomUUID().slice(0, 8).toUpperCase();
   db.users[email] = { name, email, password };
   db.accounts[email] = { address, balanceBRL: 0 };
   saveDB();
-  res.json({ msg: "Bem-vindo ao SRT-BANK!", address });
+  res.json({ msg: "Conta aberta com sucesso no SRT-BANK!", address });
 });
 
 app.get("/balance/:email", (req, res) => {
   const acc = db.accounts[req.params.email];
-  if (!acc) return res.status(404).json({ error: "Cliente não encontrado" });
+  if (!acc) return res.status(404).json({ error: "Conta não encontrada" });
   
   const rawSrt = SRT_BLOCKCHAIN.getBalance(acc.address);
   const humanSrt = Number(BigInt(rawSrt) / 10n ** 18n);
@@ -81,8 +90,10 @@ app.post("/deposit", (req, res) => {
   
   acc.balanceBRL += Number(amount);
   saveDB();
+  
+  // Depósito no Ledger Privado
   SRT_BLOCKCHAIN.depositTo(acc.address, Number(amount)); 
-  res.json({ msg: "Depósito no SRT-BANK Confirmado", novo_saldo: acc.balanceBRL });
+  res.json({ msg: "Depósito Confirmado", novo_saldo: acc.balanceBRL });
 });
 
 app.post("/transfer", (req, res) => {
@@ -92,6 +103,10 @@ app.post("/transfer", (req, res) => {
     const tx = SRT_BLOCKCHAIN.transfer(acc.address, toAddress, Number(amount));
     res.json({ msg: "Transferência SRT realizada!", txId: tx.id });
   } catch (e: any) { res.status(400).json({ error: e.message }); }
+});
+
+app.get("/audit", (req, res) => {
+  res.json(SRT_BLOCKCHAIN.audit());
 });
 
 const PORT = process.env.PORT || 3000;
