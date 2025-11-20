@@ -6,7 +6,7 @@ export const TOKEN_CONFIG = {
   name: "SRT-BANK Token",
   symbol: "SRT",
   decimals: 18n, 
-  totalSupply: 500_000_000n * 10n ** 18n, // 500 Milhões
+  totalSupply: 500_000_000n * 10n ** 18n, // 500 Milhões Fixo
   genesisAddress: "SRT-BANK-RESERVE",
   ledgerFile: "./srt_ledger.json"
 };
