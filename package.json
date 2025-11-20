@@ -1,7 +1,7 @@
 {
   "name": "srt-bank",
-  "version": "2.0.0",
-  "description": "API Oficial do SRT-BANK Financial System",
+  "version": "3.0.0",
+  "description": "API Oficial do SRT-BANK Financial System com IA",
   "main": "bank-api.ts",
   "scripts": {
     "start": "ts-node bank-api.ts"
