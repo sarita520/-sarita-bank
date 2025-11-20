@@ -1,13 +1,14 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
 
+// 🔴 CONFIGURAÇÃO OFICIAL SRT-BANK
 export const TOKEN_CONFIG = {
-  name: "Sarita Token",
+  name: "SRT-BANK Token",
   symbol: "SRT",
   decimals: 18n, 
-  totalSupply: 500_000_000n * 10n ** 18n, 
+  totalSupply: 500_000_000n * 10n ** 18n, // 500 Milhões
   genesisAddress: "SRT-BANK-RESERVE",
-  ledgerFile: "./sarita_ledger.json"
+  ledgerFile: "./srt_ledger.json"
 };
 
 interface TransactionData {
@@ -96,7 +97,7 @@ export class SaritaBlockchain {
   public transfer(from: string, to: string, amountHuman: number) {
     const amount = BigInt(Math.floor(amountHuman * 1e18));
     const senderBal = this.balances.get(from) || 0n;
-    if (senderBal < amount) throw new Error("Saldo insuficiente");
+    if (senderBal < amount) throw new Error("Saldo insuficiente no SRT-BANK");
 
     const tx: TransactionData = {
       id: crypto.randomUUID(), type: "TRANSFER", from, to,
@@ -114,7 +115,7 @@ export class SaritaBlockchain {
     this.recalculateBalances();
   }
   
-  public audit() { return { blocks: this.chain.length, status: "SECURE - SARITA CHAIN" }; }
+  public audit() { return { blocks: this.chain.length, status: "SECURE - SRT LEDGER" }; }
 }
 
 export const SRT_BLOCKCHAIN = new SaritaBlockchain();
